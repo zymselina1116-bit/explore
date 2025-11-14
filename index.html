@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Exploration Adventure</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Game Canvas -->
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Progress UI (Top Right) -->
+    <div id="progress-ui">
+        <div id="progress-text">Progress: 0/3</div>
+    </div>
+
+    <!-- Backpack UI (Right Side) -->
+    <div id="backpack-ui">
+        <div id="backpack-icon" title="Backpack (Click to open)">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 20 L30 15 Q30 10 35 10 L65 10 Q70 10 70 15 L70 20" fill="none" stroke="#8B4513" stroke-width="3"/>
+                <rect x="20" y="20" width="60" height="50" rx="5" fill="#A0522D" stroke="#8B4513" stroke-width="2"/>
+                <rect x="25" y="30" width="50" height="35" fill="#CD853F"/>
+                <circle cx="50" cy="45" r="8" fill="#8B4513"/>
+                <path d="M35 25 Q50 35 65 25" fill="none" stroke="#8B4513" stroke-width="2"/>
+            </svg>
+            <div id="item-count">0</div>
+        </div>
+    </div>
+
+    <!-- Backpack Modal -->
+    <div id="backpack-modal" class="hidden">
+        <div id="backpack-content">
+            <h2>Backpack</h2>
+            <div id="backpack-items"></div>
+            <button id="close-backpack">Close</button>
+        </div>
+    </div>
+
+    <!-- Interaction Hint -->
+    <div id="interaction-hint" class="hidden"></div>
+
+    <!-- Scene Title -->
+    <div id="scene-title"></div>
+
+    <!-- Player Avatar (Bottom Center) -->
+    <div id="player-avatar">
+        <svg id="avatar-svg" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+            <!-- Body/Torso (minimal) -->
+            <rect id="avatar-body" x="35" y="0" width="30" height="40" rx="5" fill="#4A90E2" stroke="#2E5C8A" stroke-width="2"/>
+
+            <!-- Belt -->
+            <rect x="32" y="35" width="36" height="8" fill="#8B4513"/>
+            <circle id="item-glow" cx="50" cy="39" r="6" fill="#FFD700" opacity="0" class="glow-pulse"/>
+
+            <!-- Left Leg -->
+            <g id="left-leg">
+                <rect x="38" y="43" width="12" height="35" rx="3" fill="#2C3E50" stroke="#1A252F" stroke-width="1.5"/>
+                <!-- Shoe -->
+                <ellipse cx="44" y="82" rx="8" ry="4" fill="#34495E"/>
+            </g>
+
+            <!-- Right Leg -->
+            <g id="right-leg">
+                <rect x="50" y="43" width="12" height="35" rx="3" fill="#2C3E50" stroke="#1A252F" stroke-width="1.5"/>
+                <!-- Shoe -->
+                <ellipse cx="56" y="82" rx="8" ry="4" fill="#34495E"/>
+            </g>
+        </svg>
+    </div>
+
+    <!-- End Game Screen -->
+    <div id="end-game-screen" class="hidden">
+        <div id="end-game-content">
+            <h1>🎉 Mission Complete! 🎉</h1>
+            <p>You've successfully helped reunite our friendly creature with their belongings!</p>
+            <button id="play-again-btn">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <h1>Loading Adventure...</h1>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
