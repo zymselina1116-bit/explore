@@ -217,23 +217,37 @@ function setupScene1() {
     readerLight.userData = { isReaderLight: true };
     scene.add(readerLight);
 
-    // Key Board
+    // Key Board (mounted on back wall, right side of door)
     const keyBoard = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 1.5, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.5 })
+        new THREE.BoxGeometry(1.8, 2, 0.1),
+        new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.5, roughness: 0.6 })
     );
-    keyBoard.position.set(-5, 2, -9.3);
+    keyBoard.position.set(3.2, 2.5, -9.3);
     scene.add(keyBoard);
 
-    // Keys on board
-    createKey(-5.6, 2.3, -9.2, 0xffaa00, 'card', true); // Card key (usable)
-    createKey(-5.2, 2.3, -9.2, 0xcccccc, 'vintage1', false);
-    createKey(-4.8, 2.3, -9.2, 0x888888, 'vintage2', false);
-    createKey(-4.4, 2.3, -9.2, 0xaa8866, 'vintage3', false);
-    createKey(-5.6, 1.7, -9.2, 0x999999, 'ordinary1', false);
-    createKey(-5.2, 1.7, -9.2, 0xaaaaaa, 'ordinary2', false);
-    createKey(-4.8, 1.7, -9.2, 0x777777, 'ordinary3', false);
-    createKey(-4.4, 1.7, -9.2, 0xbbbbbb, 'ordinary4', false);
+    // Keys on board - ONLY the card key is interactive
+    // Row 1 (top) - decorative traditional keys
+    createKey(2.6, 3.2, -9.2, 0xcccccc, 'vintage1', false);
+    createKey(3.0, 3.2, -9.2, 0x888888, 'vintage2', false);
+    createKey(3.4, 3.2, -9.2, 0xaa8866, 'vintage3', false);
+    createKey(3.8, 3.2, -9.2, 0x999999, 'vintage4', false);
+
+    // Row 2 - more decorative keys
+    createKey(2.6, 2.7, -9.2, 0xaaaaaa, 'ordinary1', false);
+    createKey(3.0, 2.7, -9.2, 0x777777, 'ordinary2', false);
+    createKey(3.4, 2.7, -9.2, 0xbbbbbb, 'ordinary3', false);
+    createKey(3.8, 2.7, -9.2, 0x666666, 'ordinary4', false);
+
+    // Row 3 - THE INTERACTIVE CARD KEY (center) + decorative keys
+    createKey(2.6, 2.2, -9.2, 0x999999, 'ordinary5', false);
+    createKey(3.2, 2.2, -9.2, 0xffaa00, 'card', true); // ← ONLY INTERACTIVE KEY
+    createKey(3.8, 2.2, -9.2, 0x888888, 'ordinary6', false);
+
+    // Row 4 (bottom) - decorative keys
+    createKey(2.6, 1.7, -9.2, 0xaaaaaa, 'ordinary7', false);
+    createKey(3.0, 1.7, -9.2, 0x999999, 'ordinary8', false);
+    createKey(3.4, 1.7, -9.2, 0x777777, 'ordinary9', false);
+    createKey(3.8, 1.7, -9.2, 0xbbbbbb, 'ordinary10', false);
 
     camera.position.set(0, 1.6, 5);
     cameraRotation = { yaw: 0, pitch: 0 };
@@ -517,7 +531,8 @@ function createEvidenceItem(parent, x, y, z, itemType, icon) {
         icon: icon,
         name: itemType === 'sketch' ? 'Creature Sketch' :
               itemType === 'profile' ? 'Profile Card' :
-              'Location Map'
+              'Location Map',
+        collected: false
     };
     item.visible = false; // Hidden until drawer opens
     parent.add(item);
@@ -563,154 +578,194 @@ function setupScene3() {
     GameState.scene3ItemsCollected = 0;
     updateProgressUI();
 
-    showSceneTitle('Scene 3: Dreamlike Garden');
+    showSceneTitle('Scene 3: Garden Atrium');
 
-    const roomSize = 30;
+    // ========== 写实世界参数 ==========
+    const gardenSize = 36;
 
-    // Floor (grass-like)
-    const floor = new THREE.Mesh(
-        new THREE.PlaneGeometry(roomSize, roomSize),
-        new THREE.MeshStandardMaterial({ color: 0x4a7c4e, roughness: 0.9 })
+    // ========== 背景 / 氛围设置 ==========
+    scene.background = new THREE.Color(0xf3d9b1); // 暖色黄昏天空
+    scene.fog = new THREE.FogExp2(0xf3d9b1, 0.035); // 柔和雾气
+
+    // ========== 地板（写实草皮材质） ==========
+    const grassTexture = new THREE.TextureLoader().load(
+        "https://textures.pixel-furnace.com/grass/grass_001_diffuse_2k.jpg"
     );
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    scene.add(floor);
+    grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+    grassTexture.repeat.set(8, 8);
 
-    // Warm dusk lighting
-    const ambientLight = new THREE.AmbientLight(0xffddaa, 0.7);
-    scene.add(ambientLight);
-
-    const sunLight = new THREE.DirectionalLight(0xffaa77, 0.6);
-    sunLight.position.set(10, 10, 5);
-    scene.add(sunLight);
-
-    // Walls with windows/openings
-    const wallMaterial = new THREE.MeshStandardMaterial({
-        color: 0xccaa88,
-        roughness: 0.8
+    const grassMaterial = new THREE.MeshStandardMaterial({
+        map: grassTexture,
+        roughness: 0.95,
+        metalness: 0.0
     });
 
-    const backWall = new THREE.Mesh(
-        new THREE.BoxGeometry(roomSize, 5, 0.5),
-        wallMaterial
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(gardenSize, gardenSize),
+        grassMaterial
     );
-    backWall.position.set(0, 2.5, -roomSize / 2);
-    scene.add(backWall);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
 
-    // Central Fountain
+    // ========== 光照（Steam 写实风格） ==========
+    const ambient = new THREE.AmbientLight(0xffd9b0, 0.55);
+    scene.add(ambient);
+
+    // 柔和夕阳方向光
+    const sunLight = new THREE.DirectionalLight(0xffd7a0, 1.2);
+    sunLight.position.set(12, 18, 10);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    scene.add(sunLight);
+
+    // ========== 中央喷泉（写实低模） ==========
     const fountainBase = new THREE.Mesh(
-        new THREE.CylinderGeometry(2, 2.5, 0.5, 16),
-        new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.3 })
-    );
-    fountainBase.position.set(0, 0.25, 0);
-    scene.add(fountainBase);
-
-    const fountainPool = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.8, 1.8, 0.3, 16),
+        new THREE.CylinderGeometry(2.2, 2.4, 0.6, 24),
         new THREE.MeshStandardMaterial({
-            color: 0x4499ff,
-            transparent: true,
-            opacity: 0.7,
-            metalness: 0.5
+            color: 0xcccccc,
+            roughness: 0.5,
+            metalness: 0.1
         })
     );
-    fountainPool.position.set(0, 0.6, 0);
-    scene.add(fountainPool);
+    fountainBase.position.set(0, 0.3, 0);
+    scene.add(fountainBase);
 
-    const fountainPillar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.2, 0.3, 1.5, 8),
-        new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
+    const waterSurface = new THREE.Mesh(
+        new THREE.CircleGeometry(1.8, 32),
+        new THREE.MeshPhysicalMaterial({
+            color: 0x55aaff,
+            transparent: true,
+            opacity: 0.55,
+            roughness: 0.1,
+            metalness: 0.0
+        })
     );
-    fountainPillar.position.set(0, 1.5, 0);
-    scene.add(fountainPillar);
+    waterSurface.rotation.x = -Math.PI / 2;
+    waterSurface.position.set(0, 0.61, 0);
+    scene.add(waterSurface);
 
-    // Water particles (simple animation)
-    const waterParticles = [];
-    for (let i = 0; i < 20; i++) {
-        const particle = new THREE.Mesh(
-            new THREE.SphereGeometry(0.05, 8, 8),
-            new THREE.MeshStandardMaterial({ color: 0x4499ff, transparent: true, opacity: 0.6 })
+    // 水花粒子（轻微写实）
+    const waterDrops = [];
+    for (let i = 0; i < 26; i++) {
+        const drop = new THREE.Mesh(
+            new THREE.SphereGeometry(0.05),
+            new THREE.MeshStandardMaterial({ color: 0x88ccff, transparent: true, opacity: 0.7 })
         );
-        particle.position.set(0, 2.2 + Math.random(), 0);
-        particle.userData = { velocityY: -0.02 - Math.random() * 0.02 };
-        scene.add(particle);
-        waterParticles.push(particle);
+        drop.position.set(0, 2 + Math.random() * 0.6, 0);
+        drop.userData = { velocity: -0.015 - Math.random() * 0.02 };
+        scene.add(drop);
+        waterDrops.push(drop);
     }
-
     scene.userData.animateWater = () => {
-        waterParticles.forEach(particle => {
-            particle.position.y += particle.userData.velocityY;
-            if (particle.position.y < 0.6) {
-                particle.position.y = 2.2 + Math.random();
-            }
+        waterDrops.forEach((drop) => {
+            drop.position.y += drop.userData.velocity;
+            if (drop.position.y < 0.65) drop.position.y = 2 + Math.random() * 0.6;
         });
     };
 
-    // Flowers with bone artifacts
-    createFlowerPatch(-5, 0, -5, 0xff6699, true, 'artifact1', '🦴'); // Artifact 1
-    createFlowerPatch(6, 0, -4, 0xaa66ff, true, 'artifact2', '🦴'); // Artifact 2
-    createFlowerPatch(-4, 0, 6, 0xffaa44, true, 'artifact3', '🦴'); // Artifact 3
+    // ========== 花朵（写实低模） ==========
+    function createFlowerPatch(x, z, color, hasArtifact, id) {
+        const group = new THREE.Group();
 
-    // Decorative flowers (no artifacts)
-    createFlowerPatch(8, 0, 5, 0xff4466, false);
-    createFlowerPatch(-8, 0, 3, 0x66aaff, false);
-    createFlowerPatch(3, 0, 8, 0xffdd66, false);
+        for (let i = 0; i < 6; i++) {
+            const stem = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.03, 0.03, 0.4, 8),
+                new THREE.MeshStandardMaterial({ color: 0x225522 })
+            );
+            stem.position.set(
+                (Math.random() - 0.5) * 0.8,
+                0.2,
+                (Math.random() - 0.5) * 0.8
+            );
+            group.add(stem);
 
-    // Bushes
-    createBush(-10, 0, -8);
-    createBush(10, 0, -10);
-    createBush(-12, 0, 8);
-    createBush(12, 0, 10);
+            const flower = new THREE.Mesh(
+                new THREE.SphereGeometry(0.15, 12, 12),
+                new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.5
+                })
+            );
+            flower.position.copy(stem.position);
+            flower.position.y += 0.25;
+            group.add(flower);
+        }
 
-    // Double wooden door
-    const doorX = 0;
-    const doorZ = -14;
+        // 写实发光 Artifact（骨头）
+        if (hasArtifact) {
+            const bone = new THREE.Mesh(
+                new THREE.BoxGeometry(0.55, 0.18, 0.18),
+                new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    emissive: 0xffe8bb,
+                    emissiveIntensity: 0.6,
+                    roughness: 0.3
+                })
+            );
+            bone.position.set(0, 0.35, 0);
+            bone.userData = {
+                type: "artifact",
+                artifactId: id,
+                isInteractive: true,
+                collected: false
+            };
+            group.add(bone);
+            interactiveObjects.push(bone);
 
+            const glow = new THREE.PointLight(0xffe8bb, 0.7, 3);
+            glow.position.set(0, 0.5, 0);
+            group.add(glow);
+        }
+
+        group.position.set(x, 0, z);
+        scene.add(group);
+    }
+
+    // ✨ 三个需要收集的 Artifact
+    createFlowerPatch(-6, -6, 0xff88aa, true, "artifact1");
+    createFlowerPatch(7, -4, 0xcc88ff, true, "artifact2");
+    createFlowerPatch(-4, 8, 0xffcc66, true, "artifact3");
+
+    // 🌸 普通花丛（仅装饰）
+    createFlowerPatch(9, 5, 0xff6688, false);
+    createFlowerPatch(-7, 3, 0x77bbff, false);
+    createFlowerPatch(3, -8, 0xffe066, false);
+
+    // ========== 巨大木门（Steam 写实风） ==========
     const doorFrame = new THREE.Mesh(
-        new THREE.BoxGeometry(4, 4.5, 0.3),
-        new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.8 })
+        new THREE.BoxGeometry(4.5, 4.8, 0.4),
+        new THREE.MeshStandardMaterial({ color: 0x5c3a20, roughness: 0.8 })
     );
-    doorFrame.position.set(doorX, 2.25, doorZ);
+    doorFrame.position.set(0, 2.4, -15);
     scene.add(doorFrame);
 
-    const leftDoor = new THREE.Mesh(
-        new THREE.BoxGeometry(1.8, 4.2, 0.2),
-        new THREE.MeshStandardMaterial({ color: 0x8b6914, roughness: 0.7 })
+    const door = new THREE.Mesh(
+        new THREE.BoxGeometry(4.2, 4.4, 0.25),
+        new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.7 })
     );
-    leftDoor.position.set(doorX - 1, 2.25, doorZ);
-    scene.add(leftDoor);
+    door.position.set(0, 2.4, -14.9);
+    door.userData = { type: "gardenDoor", locked: true };
+    interactiveObjects.push(door);
+    scene.add(door);
 
-    const rightDoor = new THREE.Mesh(
-        new THREE.BoxGeometry(1.8, 4.2, 0.2),
-        new THREE.MeshStandardMaterial({ color: 0x8b6914, roughness: 0.7 })
-    );
-    rightDoor.position.set(doorX + 1, 2.25, doorZ);
-    rightDoor.userData = { type: 'gardenDoor', locked: true };
-    scene.add(rightDoor);
-    interactiveObjects.push(rightDoor);
-
-    // Bell next to door
-    const bellPost = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.1, 0.1, 2, 8),
-        new THREE.MeshStandardMaterial({ color: 0x654321 })
-    );
-    bellPost.position.set(doorX + 3, 1, doorZ);
-    scene.add(bellPost);
-
+    // ========== 门铃（双击开门） ==========
     const bell = new THREE.Mesh(
-        new THREE.SphereGeometry(0.3, 16, 16),
+        new THREE.SphereGeometry(0.35, 20, 20),
         new THREE.MeshStandardMaterial({
-            color: 0xffd700,
-            metalness: 0.8,
-            emissive: 0xffaa00,
+            color: 0xffd88a,
+            metalness: 0.7,
+            roughness: 0.3,
+            emissive: 0xffcc88,
             emissiveIntensity: 0.2
         })
     );
-    bell.position.set(doorX + 3, 2.2, doorZ);
-    bell.userData = { type: 'bell', isInteractive: true };
-    scene.add(bell);
+    bell.position.set(3.5, 2.1, -15);
+    bell.userData = { type: "bell", isInteractive: true };
     interactiveObjects.push(bell);
+    scene.add(bell);
 
+    // 摄像机初始化
     camera.position.set(0, 1.6, 12);
     cameraRotation = { yaw: 0, pitch: 0 };
 }
@@ -758,7 +813,8 @@ function createFlowerPatch(x, y, z, color, hasArtifact, artifactId, icon) {
             artifactId: artifactId,
             isInteractive: true,
             icon: icon,
-            name: 'Decorative Artifact'
+            name: 'Decorative Artifact',
+            collected: false
         };
         patchGroup.add(artifact);
         interactiveObjects.push(artifact);
@@ -1197,14 +1253,16 @@ function handleClick(isDoubleClick) {
 
         // Scene 1 interactions
         if (GameState.currentScene === 1) {
-            if (userData.type === 'key' && userData.isInteractive && isDoubleClick) {
-                // Pick up card key
-                GameState.hasCardKey = true;
-                GameState.holdingItem = 'cardKey';
-                showInteractionHint('Card Key acquired!');
-                playAvatarAnimation('pickup');
-                scene.remove(object);
-                updateBackpackUI();
+            if (userData.type === 'key' && userData.keyType === 'card' && userData.isInteractive && isDoubleClick) {
+                // Pick up card key (only if interactive and not already collected)
+                if (!GameState.hasCardKey) {
+                    GameState.hasCardKey = true;
+                    GameState.holdingItem = 'cardKey';
+                    showInteractionHint('Card Key acquired!');
+                    playAvatarAnimation('pickup');
+                    scene.remove(object);
+                    updateBackpackUI();
+                }
             } else if (userData.type === 'cardReader' && !isDoubleClick) {
                 // Use card key on reader
                 if (GameState.hasCardKey) {
@@ -1243,7 +1301,13 @@ function handleClick(isDoubleClick) {
                     }
                 });
             } else if (userData.type === 'evidence' && !isDoubleClick) {
+                // Check if already collected
+                if (userData.collected) {
+                    return;
+                }
+
                 // Collect evidence
+                userData.collected = true;
                 GameState.scene2ItemsCollected++;
                 GameState.progressCurrent = GameState.scene2ItemsCollected;
                 GameState.inventory.push({
@@ -1286,16 +1350,23 @@ function handleClick(isDoubleClick) {
         // Scene 3 interactions
         if (GameState.currentScene === 3) {
             if (userData.type === 'artifact' && !isDoubleClick) {
+                // Check if already collected
+                if (userData.collected) {
+                    return;
+                }
+
+                // Collect artifact
+                userData.collected = true;
                 GameState.scene3ItemsCollected++;
                 GameState.progressCurrent = GameState.scene3ItemsCollected;
                 GameState.inventory.push({
-                    name: userData.name,
-                    icon: userData.icon,
+                    name: userData.name || 'Decorative Artifact',
+                    icon: userData.icon || '🦴',
                     type: 'artifact'
                 });
                 updateProgressUI();
                 updateBackpackUI();
-                showInteractionHint(`${userData.name} collected!`);
+                showInteractionHint(`${userData.name || 'Artifact'} collected!`);
                 playAvatarAnimation('pickup');
                 scene.remove(object);
 
