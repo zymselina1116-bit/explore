@@ -3,94 +3,846 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Exploration Adventure</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Backrooms Experience</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: #000;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            cursor: grab;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #player-avatar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+            padding: 5px;
+        }
+
+        #player-avatar-image {
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(to bottom, #444 0%, #222 50%, #111 100%);
+            border-radius: 3px;
+            position: relative;
+        }
+
+        #player-avatar-image::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+            background: #666;
+            border-radius: 50%;
+        }
+
+        #interaction-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            display: none;
+            pointer-events: all;
+            border: 2px solid rgba(0, 255, 100, 0.5);
+        }
+
+        #backpack {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            cursor: pointer;
+            pointer-events: all;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 24px;
+            transition: all 0.3s;
+        }
+
+        #backpack:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(0, 255, 100, 0.8);
+        }
+
+        #inventory-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #f00;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        #fade-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s;
+        }
+
+        #controls-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .key {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 3px;
+            margin: 0 2px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <!-- Game Canvas -->
-    <div id="game-container">
-        <canvas id="game-canvas"></canvas>
-    </div>
+    <div id="canvas-container">
+        <div id="ui-overlay">
+            <div id="controls-info">
+                <div><span class="key">W A S D</span> - Move</div>
+                <div><span class="key">Mouse Drag</span> - Look Around</div>
+                <div><span class="key">E</span> - Interact</div>
+            </div>
 
-    <!-- Progress UI (Top Right) -->
-    <div id="progress-ui">
-        <div id="progress-text">Progress: 0/3</div>
-    </div>
+            <div id="backpack">
+                🎒
+                <div id="inventory-count" style="display: none;">0</div>
+            </div>
 
-    <!-- Backpack UI (Right Side) -->
-    <div id="backpack-ui">
-        <div id="backpack-icon" title="Backpack (Click to open)">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <path d="M30 20 L30 15 Q30 10 35 10 L65 10 Q70 10 70 15 L70 20" fill="none" stroke="#8B4513" stroke-width="3"/>
-                <rect x="20" y="20" width="60" height="50" rx="5" fill="#A0522D" stroke="#8B4513" stroke-width="2"/>
-                <rect x="25" y="30" width="50" height="35" fill="#CD853F"/>
-                <circle cx="50" cy="45" r="8" fill="#8B4513"/>
-                <path d="M35 25 Q50 35 65 25" fill="none" stroke="#8B4513" stroke-width="2"/>
-            </svg>
-            <div id="item-count">0</div>
+            <div id="player-avatar">
+                <div id="player-avatar-image"></div>
+            </div>
+
+            <div id="interaction-prompt">
+                Press <span class="key">E</span> to interact
+            </div>
+
+            <div id="fade-overlay"></div>
         </div>
     </div>
 
-    <!-- Backpack Modal -->
-    <div id="backpack-modal" class="hidden">
-        <div id="backpack-content">
-            <h2>Backpack</h2>
-            <div id="backpack-items"></div>
-            <button id="close-backpack">Close</button>
-        </div>
-    </div>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
 
-    <!-- Interaction Hint -->
-    <div id="interaction-hint" class="hidden"></div>
+    <script type="module">
+        import * as THREE from 'three';
 
-    <!-- Scene Title -->
-    <div id="scene-title"></div>
+        // ============================================================
+        // GLOBAL GAME STATE
+        // ============================================================
+        const gameState = {
+            currentRoom: 1,
+            hasCard: false,
+            doorUnlocked: false,
+            inventory: [],
+            interactableObject: null
+        };
 
-    <!-- Player Avatar (Bottom Center) -->
-    <div id="player-avatar">
-        <svg id="avatar-svg" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
-            <!-- Body/Torso (minimal) -->
-            <rect id="avatar-body" x="35" y="0" width="30" height="40" rx="5" fill="#4A90E2" stroke="#2E5C8A" stroke-width="2"/>
+        // ============================================================
+        // SCENE SETUP
+        // ============================================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        scene.fog = new THREE.Fog(0x0a0a0a, 1, 30);
 
-            <!-- Belt -->
-            <rect x="32" y="35" width="36" height="8" fill="#8B4513"/>
-            <circle id="item-glow" cx="50" cy="39" r="6" fill="#FFD700" opacity="0" class="glow-pulse"/>
+        // Camera
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.set(0, 1.6, 8); // 1.6m height (eye level)
 
-            <!-- Left Leg -->
-            <g id="left-leg">
-                <rect x="38" y="43" width="12" height="35" rx="3" fill="#2C3E50" stroke="#1A252F" stroke-width="1.5"/>
-                <!-- Shoe -->
-                <ellipse cx="44" y="82" rx="8" ry="4" fill="#34495E"/>
-            </g>
+        // Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.8;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            <!-- Right Leg -->
-            <g id="right-leg">
-                <rect x="50" y="43" width="12" height="35" rx="3" fill="#2C3E50" stroke="#1A252F" stroke-width="1.5"/>
-                <!-- Shoe -->
-                <ellipse cx="56" y="82" rx="8" ry="4" fill="#34495E"/>
-            </g>
-        </svg>
-    </div>
+        // ============================================================
+        // TEXTURE LOADER
+        // ============================================================
+        const textureLoader = new THREE.TextureLoader();
+        const textures = {};
 
-    <!-- End Game Screen -->
-    <div id="end-game-screen" class="hidden">
-        <div id="end-game-content">
-            <h1>🎉 Mission Complete! 🎉</h1>
-            <p>You've successfully helped reunite our friendly creature with their belongings!</p>
-            <button id="play-again-btn">Play Again</button>
-        </div>
-    </div>
+        // Load all textures
+        const textureUrls = {
+            room1Floor: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/41db52c3b4a967c77989cde41f51bbd8ea60b10d/Screenshot%202025-11-16%20at%2011.32.02.png',
+            room1Wall: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/1d3a162a583640f4cc4887a90ac3b21df84f9f75/Screenshot%202025-11-16%20at%2011.33.37.png',
+            doorFrame: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/d1f948a98383aa407fedbcc7bba124ba6bf5cc37/Screenshot%202025-11-16%20at%2011.37.24.png',
+            exitSign: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/6c609a9c86e17d96e216752c622768e152a4016f/Screenshot%202025-11-16%20at%2011.38.38.png',
+            room2Floor: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/bf02def17b7a6a47a1d6230743ec79c70424dc5c/Screenshot%202025-11-16%20at%2011.41.56.png'
+        };
 
-    <!-- Loading Screen -->
-    <div id="loading-screen">
-        <div class="loading-content">
-            <h1>Loading Adventure...</h1>
-            <div class="loading-spinner"></div>
-        </div>
-    </div>
+        // ============================================================
+        // ROOM 1 - INDUSTRIAL HALL
+        // ============================================================
+        const room1Group = new THREE.Group();
+        scene.add(room1Group);
 
-    <!-- Three.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="script.js"></script>
+        // Room dimensions
+        const ROOM_WIDTH = 20;
+        const ROOM_HEIGHT = 4;
+        const ROOM_DEPTH = 20;
+
+        // Floor
+        const floorTexture = textureLoader.load(textureUrls.room1Floor);
+        floorTexture.wrapS = THREE.RepeatWrapping;
+        floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(8, 8);
+
+        const floorGeometry = new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_DEPTH);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            map: floorTexture,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = 0;
+        floor.receiveShadow = true;
+        room1Group.add(floor);
+
+        // Walls
+        const wallTexture = textureLoader.load(textureUrls.room1Wall);
+        wallTexture.wrapS = THREE.RepeatWrapping;
+        wallTexture.wrapT = THREE.RepeatWrapping;
+        wallTexture.repeat.set(4, 1);
+
+        const wallMaterial = new THREE.MeshStandardMaterial({
+            map: wallTexture,
+            roughness: 0.9,
+            metalness: 0.1
+        });
+
+        // Back wall (with door)
+        const backWallGeometry = new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_HEIGHT);
+        const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        backWall.position.set(0, ROOM_HEIGHT / 2, -ROOM_DEPTH / 2);
+        backWall.receiveShadow = true;
+        backWall.castShadow = true;
+        room1Group.add(backWall);
+
+        // Left wall
+        const leftWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(ROOM_DEPTH, ROOM_HEIGHT),
+            wallMaterial
+        );
+        leftWall.position.set(-ROOM_WIDTH / 2, ROOM_HEIGHT / 2, 0);
+        leftWall.rotation.y = Math.PI / 2;
+        leftWall.receiveShadow = true;
+        leftWall.castShadow = true;
+        room1Group.add(leftWall);
+
+        // Right wall (with key board)
+        const rightWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(ROOM_DEPTH, ROOM_HEIGHT),
+            wallMaterial
+        );
+        rightWall.position.set(ROOM_WIDTH / 2, ROOM_HEIGHT / 2, 0);
+        rightWall.rotation.y = -Math.PI / 2;
+        rightWall.receiveShadow = true;
+        rightWall.castShadow = true;
+        room1Group.add(rightWall);
+
+        // Front wall
+        const frontWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+        frontWall.position.set(0, ROOM_HEIGHT / 2, ROOM_DEPTH / 2);
+        frontWall.rotation.y = Math.PI;
+        frontWall.receiveShadow = true;
+        frontWall.castShadow = true;
+        room1Group.add(frontWall);
+
+        // Ceiling
+        const ceilingMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2a2a2a,
+            roughness: 0.7,
+            metalness: 0.5
+        });
+        const ceiling = new THREE.Mesh(
+            new THREE.PlaneGeometry(ROOM_WIDTH, ROOM_DEPTH),
+            ceilingMaterial
+        );
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.y = ROOM_HEIGHT;
+        ceiling.receiveShadow = true;
+        room1Group.add(ceiling);
+
+        // ============================================================
+        // LIGHTING
+        // ============================================================
+
+        // Ambient light (very dim)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
+        scene.add(ambientLight);
+
+        // Industrial ceiling lights
+        const ceilingLight1 = new THREE.PointLight(0xffffff, 80, 25);
+        ceilingLight1.position.set(-5, ROOM_HEIGHT - 0.2, -3);
+        ceilingLight1.castShadow = true;
+        ceilingLight1.shadow.mapSize.width = 1024;
+        ceilingLight1.shadow.mapSize.height = 1024;
+        room1Group.add(ceilingLight1);
+
+        const ceilingLight2 = new THREE.PointLight(0xffffff, 80, 25);
+        ceilingLight2.position.set(5, ROOM_HEIGHT - 0.2, -3);
+        ceilingLight2.castShadow = true;
+        ceilingLight2.shadow.mapSize.width = 1024;
+        ceilingLight2.shadow.mapSize.height = 1024;
+        room1Group.add(ceilingLight2);
+
+        // Exit sign glow (green)
+        const exitSignLight = new THREE.PointLight(0x00ff44, 8, 6);
+        exitSignLight.position.set(0, 3, -ROOM_DEPTH / 2 + 0.5);
+        room1Group.add(exitSignLight);
+
+        // Red alarm lights
+        const alarmLight1 = new THREE.PointLight(0xff0000, 0, 15);
+        alarmLight1.position.set(-6, ROOM_HEIGHT - 0.5, 4);
+        alarmLight1.castShadow = true;
+        room1Group.add(alarmLight1);
+
+        const alarmLight2 = new THREE.PointLight(0xff0000, 0, 15);
+        alarmLight2.position.set(6, ROOM_HEIGHT - 0.5, 4);
+        alarmLight2.castShadow = true;
+        room1Group.add(alarmLight2);
+
+        // Alarm light housings
+        const alarmHousingGeometry = new THREE.CylinderGeometry(0.15, 0.2, 0.1, 16);
+        const alarmHousingMaterial = new THREE.MeshStandardMaterial({
+            color: 0x330000,
+            metalness: 0.8,
+            roughness: 0.2,
+            emissive: 0xff0000,
+            emissiveIntensity: 0
+        });
+
+        const alarmHousing1 = new THREE.Mesh(alarmHousingGeometry, alarmHousingMaterial.clone());
+        alarmHousing1.position.copy(alarmLight1.position);
+        alarmHousing1.position.y -= 0.1;
+        room1Group.add(alarmHousing1);
+
+        const alarmHousing2 = new THREE.Mesh(alarmHousingGeometry, alarmHousingMaterial.clone());
+        alarmHousing2.position.copy(alarmLight2.position);
+        alarmHousing2.position.y -= 0.1;
+        room1Group.add(alarmHousing2);
+
+        // ============================================================
+        // DOOR SYSTEM
+        // ============================================================
+        const doorGroup = new THREE.Group();
+        doorGroup.position.set(0, 0, -ROOM_DEPTH / 2 + 0.1);
+        room1Group.add(doorGroup);
+
+        // Door frame (metal)
+        const doorFrameTexture = textureLoader.load(textureUrls.doorFrame);
+        doorFrameTexture.wrapS = THREE.RepeatWrapping;
+        doorFrameTexture.wrapT = THREE.RepeatWrapping;
+
+        const doorFrameMaterial = new THREE.MeshStandardMaterial({
+            map: doorFrameTexture,
+            roughness: 0.4,
+            metalness: 0.8
+        });
+
+        // Frame pieces
+        const frameThickness = 0.15;
+        const doorWidth = 2;
+        const doorHeight = 2.5;
+
+        // Left frame
+        const leftFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(frameThickness, doorHeight, 0.2),
+            doorFrameMaterial
+        );
+        leftFrame.position.set(-doorWidth / 2 - frameThickness / 2, doorHeight / 2, 0);
+        leftFrame.castShadow = true;
+        doorGroup.add(leftFrame);
+
+        // Right frame
+        const rightFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(frameThickness, doorHeight, 0.2),
+            doorFrameMaterial
+        );
+        rightFrame.position.set(doorWidth / 2 + frameThickness / 2, doorHeight / 2, 0);
+        rightFrame.castShadow = true;
+        doorGroup.add(rightFrame);
+
+        // Top frame
+        const topFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(doorWidth + frameThickness * 2, frameThickness, 0.2),
+            doorFrameMaterial
+        );
+        topFrame.position.set(0, doorHeight + frameThickness / 2, 0);
+        topFrame.castShadow = true;
+        doorGroup.add(topFrame);
+
+        // Glass door panel
+        const glassMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            metalness: 0,
+            roughness: 0.1,
+            transmission: 0.9,
+            thickness: 0.5,
+            transparent: true,
+            opacity: 0.3
+        });
+
+        const doorPanel = new THREE.Mesh(
+            new THREE.BoxGeometry(doorWidth, doorHeight, 0.05),
+            glassMaterial
+        );
+        doorPanel.position.set(0, doorHeight / 2, 0);
+        doorPanel.castShadow = true;
+        doorPanel.receiveShadow = true;
+        doorGroup.add(doorPanel);
+
+        // Door handle
+        const handleMaterial = new THREE.MeshStandardMaterial({
+            color: 0x888888,
+            metalness: 0.9,
+            roughness: 0.2
+        });
+        const doorHandle = new THREE.Mesh(
+            new THREE.BoxGeometry(0.05, 0.15, 0.3),
+            handleMaterial
+        );
+        doorHandle.position.set(doorWidth / 2 - 0.2, doorHeight / 2, 0.1);
+        doorHandle.castShadow = true;
+        doorGroup.add(doorHandle);
+
+        // Exit sign above door
+        const exitSignTexture = textureLoader.load(textureUrls.exitSign);
+        const exitSignMaterial = new THREE.MeshStandardMaterial({
+            map: exitSignTexture,
+            emissive: 0x00ff44,
+            emissiveIntensity: 0.8,
+            emissiveMap: exitSignTexture
+        });
+
+        const exitSign = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 0.4, 0.1),
+            exitSignMaterial
+        );
+        exitSign.position.set(0, doorHeight + 0.5, 0);
+        exitSign.castShadow = true;
+        doorGroup.add(exitSign);
+
+        // ============================================================
+        // CARD READER
+        // ============================================================
+        const cardReaderGroup = new THREE.Group();
+        cardReaderGroup.position.set(doorWidth / 2 + 0.5, 1.2, -ROOM_DEPTH / 2 + 0.15);
+        room1Group.add(cardReaderGroup);
+
+        const cardReaderBody = new THREE.Mesh(
+            new THREE.BoxGeometry(0.15, 0.25, 0.05),
+            new THREE.MeshStandardMaterial({
+                color: 0x222222,
+                roughness: 0.3,
+                metalness: 0.7
+            })
+        );
+        cardReaderGroup.add(cardReaderBody);
+
+        const cardReaderScreen = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.1, 0.15),
+            new THREE.MeshStandardMaterial({
+                color: 0x000000,
+                emissive: 0xff0000,
+                emissiveIntensity: 0.5
+            })
+        );
+        cardReaderScreen.position.set(0, 0, 0.026);
+        cardReaderGroup.add(cardReaderScreen);
+
+        cardReaderGroup.userData.interactive = true;
+        cardReaderGroup.userData.type = 'cardReader';
+
+        // ============================================================
+        // KEY BOARD
+        // ============================================================
+        const keyBoardGroup = new THREE.Group();
+        keyBoardGroup.position.set(ROOM_WIDTH / 2 - 0.15, 1.5, 2);
+        room1Group.add(keyBoardGroup);
+
+        // Key board backing
+        const keyBoardBacking = new THREE.Mesh(
+            new THREE.BoxGeometry(0.05, 0.8, 1.2),
+            new THREE.MeshStandardMaterial({
+                color: 0x333333,
+                roughness: 0.6,
+                metalness: 0.4
+            })
+        );
+        keyBoardGroup.add(keyBoardBacking);
+
+        // Create several keys (hooks)
+        const keyHookMaterial = new THREE.MeshStandardMaterial({
+            color: 0x666666,
+            roughness: 0.5,
+            metalness: 0.6
+        });
+
+        for (let i = 0; i < 6; i++) {
+            const hook = new THREE.Mesh(
+                new THREE.TorusGeometry(0.04, 0.01, 8, 16),
+                keyHookMaterial
+            );
+            hook.position.set(0.03, 0.3 - i * 0.15, -0.4 + (i % 2) * 0.4);
+            hook.rotation.y = Math.PI / 2;
+            keyBoardGroup.add(hook);
+        }
+
+        // The interactive key card (glowing slightly)
+        const keyCard = new THREE.Mesh(
+            new THREE.BoxGeometry(0.02, 0.1, 0.06),
+            new THREE.MeshStandardMaterial({
+                color: 0xffd700,
+                roughness: 0.3,
+                metalness: 0.8,
+                emissive: 0xffd700,
+                emissiveIntensity: 0.3
+            })
+        );
+        keyCard.position.set(0.04, 0.15, -0.4);
+        keyCard.userData.interactive = true;
+        keyCard.userData.type = 'keyCard';
+        keyBoardGroup.add(keyCard);
+
+        // ============================================================
+        // PLAYER CONTROLS
+        // ============================================================
+        const keys = {};
+        const playerVelocity = new THREE.Vector3();
+        const playerSpeed = 3.5;
+
+        // Mouse controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        const rotationSpeed = 0.002;
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+
+        // Keyboard events
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Mouse events
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+
+            euler.setFromQuaternion(camera.quaternion);
+            euler.y -= deltaX * rotationSpeed;
+            euler.x -= deltaY * rotationSpeed;
+            euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
+            camera.quaternion.setFromEuler(euler);
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        // ============================================================
+        // COLLISION DETECTION
+        // ============================================================
+        function checkCollision(position) {
+            const margin = 0.3;
+            const halfWidth = ROOM_WIDTH / 2 - margin;
+            const halfDepth = ROOM_DEPTH / 2 - margin;
+
+            position.x = Math.max(-halfWidth, Math.min(halfWidth, position.x));
+            position.z = Math.max(-halfDepth, Math.min(halfDepth, position.z));
+
+            return position;
+        }
+
+        // ============================================================
+        // RAYCASTER FOR INTERACTIONS
+        // ============================================================
+        const raycaster = new THREE.Raycaster();
+        raycaster.far = 3;
+        const interactionPrompt = document.getElementById('interaction-prompt');
+
+        function checkInteractable() {
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+            const interactables = [];
+            room1Group.traverse((obj) => {
+                if (obj.userData.interactive) {
+                    interactables.push(obj);
+                }
+            });
+
+            const intersects = raycaster.intersectObjects(interactables, true);
+
+            if (intersects.length > 0) {
+                const obj = intersects[0].object;
+                let parent = obj;
+                while (parent && !parent.userData.interactive) {
+                    parent = parent.parent;
+                }
+
+                if (parent && parent.userData.interactive) {
+                    gameState.interactableObject = parent;
+                    interactionPrompt.style.display = 'block';
+                    return;
+                }
+            }
+
+            gameState.interactableObject = null;
+            interactionPrompt.style.display = 'none';
+        }
+
+        // Interaction handler
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'e' && gameState.interactableObject) {
+                const obj = gameState.interactableObject;
+
+                if (obj.userData.type === 'keyCard' && !gameState.hasCard) {
+                    // Pick up key card
+                    gameState.hasCard = true;
+                    gameState.inventory.push('keyCard');
+                    obj.visible = false;
+                    updateInventoryUI();
+                    console.log('Picked up key card!');
+
+                } else if (obj.userData.type === 'cardReader' && gameState.hasCard && !gameState.doorUnlocked) {
+                    // Unlock door
+                    gameState.doorUnlocked = true;
+                    cardReaderScreen.material.emissive.setHex(0x00ff00);
+                    console.log('Door unlocked!');
+
+                    // Open door animation
+                    animateDoorOpen();
+                }
+
+                interactionPrompt.style.display = 'none';
+            }
+        });
+
+        function updateInventoryUI() {
+            const countElement = document.getElementById('inventory-count');
+            if (gameState.inventory.length > 0) {
+                countElement.textContent = gameState.inventory.length;
+                countElement.style.display = 'flex';
+            } else {
+                countElement.style.display = 'none';
+            }
+        }
+
+        // ============================================================
+        // DOOR ANIMATION
+        // ============================================================
+        function animateDoorOpen() {
+            const startRotation = doorPanel.rotation.y;
+            const endRotation = -Math.PI / 2;
+            const duration = 1500;
+            const startTime = Date.now();
+
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+
+                doorPanel.rotation.y = startRotation + (endRotation - startRotation) * eased;
+                doorHandle.rotation.y = doorPanel.rotation.y;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Door is open, wait a moment then transition
+                    setTimeout(() => {
+                        transitionToRoom2();
+                    }, 500);
+                }
+            }
+
+            animate();
+        }
+
+        // ============================================================
+        // ROOM TRANSITION
+        // ============================================================
+        function transitionToRoom2() {
+            const fadeOverlay = document.getElementById('fade-overlay');
+            fadeOverlay.style.opacity = '1';
+
+            setTimeout(() => {
+                console.log('Transitioning to Room 2...');
+                // Room 2 will be implemented next
+                fadeOverlay.style.opacity = '0';
+            }, 1000);
+        }
+
+        // ============================================================
+        // ALARM LIGHT ANIMATION
+        // ============================================================
+        let alarmTime = 0;
+        function updateAlarmLights(deltaTime) {
+            alarmTime += deltaTime;
+            const intensity = (Math.sin(alarmTime * 2) + 1) * 15; // Slow pulse
+
+            alarmLight1.intensity = intensity;
+            alarmLight2.intensity = intensity;
+
+            alarmHousing1.material.emissiveIntensity = intensity / 30;
+            alarmHousing2.material.emissiveIntensity = intensity / 30;
+        }
+
+        // ============================================================
+        // ANIMATION LOOP
+        // ============================================================
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const deltaTime = clock.getDelta();
+
+            // Update player movement
+            const forward = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+            forward.y = 0;
+            forward.normalize();
+
+            const right = new THREE.Vector3();
+            right.crossVectors(forward, camera.up).normalize();
+
+            playerVelocity.set(0, 0, 0);
+
+            if (keys['w']) playerVelocity.add(forward);
+            if (keys['s']) playerVelocity.sub(forward);
+            if (keys['a']) playerVelocity.sub(right);
+            if (keys['d']) playerVelocity.add(right);
+
+            if (playerVelocity.length() > 0) {
+                playerVelocity.normalize().multiplyScalar(playerSpeed * deltaTime);
+                const newPosition = camera.position.clone().add(playerVelocity);
+                camera.position.copy(checkCollision(newPosition));
+            }
+
+            // Update alarm lights
+            updateAlarmLights(deltaTime);
+
+            // Check for interactable objects
+            checkInteractable();
+
+            // Render
+            renderer.render(scene, camera);
+        }
+
+        // ============================================================
+        // WINDOW RESIZE
+        // ============================================================
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start animation loop
+        animate();
+
+        console.log('Room 1 - Industrial Hall initialized');
+        console.log('Controls: WASD to move, Mouse drag to look around, E to interact');
+    </script>
 </body>
 </html>
