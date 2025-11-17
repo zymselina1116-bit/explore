@@ -3,25 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Game - Clean Build</title>
+    <title>Exploration Game - Mystery Facility</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="instructions">
-        <h1>Three.js Game</h1>
-        <p>Click to start</p>
-        <p>WASD to move | Mouse to look | E to interact</p>
-    </div>
-
+    <!-- Game Canvas Container -->
     <div id="game-container"></div>
 
-    <!-- Three.js from CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Top-Left Instructions -->
+    <div id="instructions" class="ui-panel">
+        <div class="instruction-line">WASD / Arrow Keys – Move</div>
+        <div class="instruction-line">Mouse Drag – Look Around</div>
+        <div class="instruction-line">Click – Interact</div>
+        <div class="instruction-line">Double-click – Pick Up</div>
+    </div>
 
-    <!-- PointerLockControls -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+    <!-- Top-Center Scene Name -->
+    <div id="scene-name" class="ui-panel">Industrial Hall</div>
 
-    <!-- Game Script -->
-    <script src="script.js"></script>
+    <!-- Top-Right Progress -->
+    <div id="progress" class="ui-panel"></div>
+
+    <!-- Bottom-Center Interaction Hint -->
+    <div id="interaction-hint" class="ui-panel"></div>
+
+    <!-- Bottom-Left Backpack -->
+    <div id="backpack" class="ui-panel">
+        <div id="backpack-icon">🎒 <span id="item-count">0</span></div>
+    </div>
+
+    <!-- Backpack Panel (Hidden by default) -->
+    <div id="backpack-panel" class="hidden">
+        <div class="panel-header">
+            <h2>Inventory</h2>
+            <button id="close-backpack">✕</button>
+        </div>
+        <div id="backpack-items"></div>
+        <div class="panel-hint">Double-click items to drop them</div>
+    </div>
+
+    <!-- Transition Overlay -->
+    <div id="transition-overlay" class="hidden"></div>
+
+    <!-- Message Overlay -->
+    <div id="message-overlay" class="hidden">
+        <div id="message-text"></div>
+    </div>
+
+    <!-- Ending Screen -->
+    <div id="ending-screen" class="hidden">
+        <h1>Mission Complete</h1>
+        <p id="ending-message">All information and artifacts have been safely delivered.</p>
+        <button id="play-again">Play Again</button>
+    </div>
+
+    <!-- Avatar (Optional) -->
+    <div id="avatar" class="hidden">
+        <div class="avatar-body"></div>
+    </div>
+
+    <!-- Main Game Script -->
+    <script type="module" src="./script.js"></script>
 </body>
 </html>
