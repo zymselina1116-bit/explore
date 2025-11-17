@@ -91,12 +91,13 @@ function loadTexture(url, options = {}) {
             if (options.repeat) {
                 tex.repeat.set(options.repeat[0], options.repeat[1]);
             }
+            console.log(`Texture loaded successfully: ${url.substring(url.lastIndexOf('/') + 1)}`);
         },
         // onProgress
         undefined,
         // onError
         (err) => {
-            console.warn(`Failed to load texture: ${url}`, err);
+            console.error(`Failed to load texture: ${url}`, err);
         }
     );
     return texture;
@@ -116,6 +117,9 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
     document.getElementById('game-container').appendChild(renderer.domElement);
 
     // Build initial scene
