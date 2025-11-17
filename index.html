@@ -543,56 +543,250 @@
         cardReaderGroup.userData.interactive = true;
         cardReaderGroup.userData.type = 'cardReader';
 
-        // ============================================================
-        // KEY BOARD
-        // ============================================================
+        // ========== REALISTIC KEY BOARD SYSTEM ==========
+        // Key Board (realistic metal panel with frame)
         const keyBoardGroup = new THREE.Group();
-        keyBoardGroup.position.set(ROOM_WIDTH / 2 - 0.15, 1.5, 2);
+        keyBoardGroup.position.set(doorWidth / 2 + 1.2, 2.5, -ROOM_DEPTH / 2 + 0.15);
         room1Group.add(keyBoardGroup);
 
-        // Key board backing
-        const keyBoardBacking = new THREE.Mesh(
-            new THREE.BoxGeometry(0.05, 0.8, 1.2),
+        // Main board backing (dark brushed metal)
+        const boardBacking = new THREE.Mesh(
+            new THREE.BoxGeometry(1.8, 1.5, 0.08),
             new THREE.MeshStandardMaterial({
-                color: 0x333333,
-                roughness: 0.6,
-                metalness: 0.4
+                color: 0x2a2a2a,
+                metalness: 0.8,
+                roughness: 0.4
             })
         );
-        keyBoardGroup.add(keyBoardBacking);
+        keyBoardGroup.add(boardBacking);
 
-        // Create several keys (hooks)
-        const keyHookMaterial = new THREE.MeshStandardMaterial({
-            color: 0x666666,
-            roughness: 0.5,
-            metalness: 0.6
+        // Board frame (slightly lighter metal)
+        const frameThickness = 0.05;
+        const frameMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3a3a3a,
+            metalness: 0.7,
+            roughness: 0.3
         });
 
-        for (let i = 0; i < 6; i++) {
-            const hook = new THREE.Mesh(
-                new THREE.TorusGeometry(0.04, 0.01, 8, 16),
-                keyHookMaterial
+        // Top frame
+        const topFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(1.9, frameThickness, 0.1),
+            frameMaterial
+        );
+        topFrame.position.y = 0.75 + frameThickness / 2;
+        keyBoardGroup.add(topFrame);
+
+        // Bottom frame
+        const bottomFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(1.9, frameThickness, 0.1),
+            frameMaterial
+        );
+        bottomFrame.position.y = -0.75 - frameThickness / 2;
+        keyBoardGroup.add(bottomFrame);
+
+        // Left frame
+        const leftFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(frameThickness, 1.5, 0.1),
+            frameMaterial
+        );
+        leftFrame.position.x = -0.9 - frameThickness / 2;
+        keyBoardGroup.add(leftFrame);
+
+        // Right frame
+        const rightFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(frameThickness, 1.5, 0.1),
+            frameMaterial
+        );
+        rightFrame.position.x = 0.9 + frameThickness / 2;
+        keyBoardGroup.add(rightFrame);
+
+        // ========== KEY HOOKS ==========
+        function createKeyHook(x, y) {
+            const hookGroup = new THREE.Group();
+
+            // Hook backing plate
+            const hookPlate = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.04, 0.04, 0.02, 16),
+                new THREE.MeshStandardMaterial({
+                    color: 0x444444,
+                    metalness: 0.9,
+                    roughness: 0.2
+                })
             );
-            hook.position.set(0.03, 0.3 - i * 0.15, -0.4 + (i % 2) * 0.4);
-            hook.rotation.y = Math.PI / 2;
-            keyBoardGroup.add(hook);
+            hookPlate.rotation.x = Math.PI / 2;
+            hookGroup.add(hookPlate);
+
+            // Hook itself (small curved piece)
+            const hookCurve = new THREE.Mesh(
+                new THREE.TorusGeometry(0.025, 0.008, 8, 16, Math.PI),
+                new THREE.MeshStandardMaterial({
+                    color: 0x555555,
+                    metalness: 0.9,
+                    roughness: 0.2
+                })
+            );
+            hookCurve.rotation.x = Math.PI / 2;
+            hookCurve.position.z = 0.02;
+            hookGroup.add(hookCurve);
+
+            hookGroup.position.set(x, y, 0.05);
+            keyBoardGroup.add(hookGroup);
         }
 
-        // The interactive key card (glowing slightly)
-        const keyCard = new THREE.Mesh(
-            new THREE.BoxGeometry(0.02, 0.1, 0.06),
-            new THREE.MeshStandardMaterial({
-                color: 0xffd700,
-                roughness: 0.3,
-                metalness: 0.8,
-                emissive: 0xffd700,
-                emissiveIntensity: 0.3
-            })
-        );
-        keyCard.position.set(0.04, 0.15, -0.4);
-        keyCard.userData.interactive = true;
-        keyCard.userData.type = 'keyCard';
-        keyBoardGroup.add(keyCard);
+        // ========== DETAILED KEY CREATION ==========
+        function createDetailedKey(x, y, z, color, keyType, isInteractive, rotationAngle) {
+            const keyGroup = new THREE.Group();
+
+            if (keyType === 'card') {
+                // ========== REALISTIC 3D CARD KEY (Beveled edges) ==========
+                // Main card body
+                const cardBody = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.25, 0.16, 0.04),
+                    new THREE.MeshStandardMaterial({
+                        color: color,
+                        metalness: 0.4,
+                        roughness: 0.3,
+                        emissive: isInteractive ? 0xd4af37 : 0x000000,
+                        emissiveIntensity: isInteractive ? 0.12 : 0
+                    })
+                );
+                keyGroup.add(cardBody);
+
+                // Beveled edges (small border trim)
+                const bevelMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x8b7355,
+                    metalness: 0.6,
+                    roughness: 0.2
+                });
+
+                // Top bevel
+                const topBevel = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.26, 0.01, 0.045),
+                    bevelMaterial
+                );
+                topBevel.position.y = 0.085;
+                keyGroup.add(topBevel);
+
+                // Bottom bevel
+                const bottomBevel = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.26, 0.01, 0.045),
+                    bevelMaterial
+                );
+                bottomBevel.position.y = -0.085;
+                keyGroup.add(bottomBevel);
+
+                // Subtle glow indicator for interactive card
+                if (isInteractive) {
+                    const glowLight = new THREE.PointLight(0xd4af37, 0.3, 0.5);
+                    glowLight.position.set(0, 0, 0.05);
+                    keyGroup.add(glowLight);
+                }
+
+            } else {
+                // ========== REALISTIC METAL KEY (Traditional style) ==========
+                const keyMaterial = new THREE.MeshStandardMaterial({
+                    color: color,
+                    metalness: 0.85,
+                    roughness: 0.25
+                });
+
+                // Key head (circular bow)
+                const keyHead = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.06, 0.015, 12, 24),
+                    keyMaterial
+                );
+                keyHead.rotation.x = Math.PI / 2;
+                keyGroup.add(keyHead);
+
+                // Key shaft (blade)
+                const keyShaft = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.012, 0.22, 0.025),
+                    keyMaterial
+                );
+                keyShaft.position.y = -0.14;
+                keyGroup.add(keyShaft);
+
+                // Key teeth (small notches)
+                const tooth1 = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.012, 0.02, 0.01),
+                    keyMaterial
+                );
+                tooth1.position.set(0, -0.18, 0.015);
+                keyGroup.add(tooth1);
+
+                const tooth2 = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.012, 0.015, 0.01),
+                    keyMaterial
+                );
+                tooth2.position.set(0, -0.22, 0.015);
+                keyGroup.add(tooth2);
+
+                // Key tip
+                const keyTip = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.015, 0.03, 8),
+                    keyMaterial
+                );
+                keyTip.position.y = -0.265;
+                keyTip.rotation.x = Math.PI;
+                keyGroup.add(keyTip);
+            }
+
+            // Apply natural hanging rotation
+            keyGroup.rotation.z = (rotationAngle || 0) * (Math.PI / 180);
+
+            // Position the key
+            keyGroup.position.set(x, y, z);
+
+            // Set user data for interaction
+            keyGroup.userData = {
+                type: 'keyCard',
+                interactive: isInteractive
+            };
+
+            if (isInteractive) {
+                gameState.interactableObject = keyGroup;
+                room1Group.traverse((obj) => {
+                    if (obj.userData.interactive) {
+                        // Already tracked
+                    }
+                });
+            }
+
+            room1Group.add(keyGroup);
+            return keyGroup;
+        }
+
+        // ========== DECORATIVE METAL KEYS (8 total, 2 rows) ==========
+        const keyBoardX = doorWidth / 2 + 1.2;
+        const keyBoardY = 2.5;
+        const keyBoardZ = -ROOM_DEPTH / 2 + 0.08;
+
+        // Row 1 (top row) - 4 decorative keys
+        createKeyHook(-0.6, 0.4);
+        createDetailedKey(keyBoardX - 0.6, keyBoardY + 0.4, keyBoardZ, 0xcccccc, 'metal', false, 0); // Silver
+
+        createKeyHook(-0.2, 0.4);
+        createDetailedKey(keyBoardX - 0.2, keyBoardY + 0.4, keyBoardZ, 0x888888, 'metal', false, 5); // Dark steel
+
+        createKeyHook(0.2, 0.4);
+        createDetailedKey(keyBoardX + 0.2, keyBoardY + 0.4, keyBoardZ, 0xaa8866, 'metal', false, -3); // Brass
+
+        createKeyHook(0.6, 0.4);
+        createDetailedKey(keyBoardX + 0.6, keyBoardY + 0.4, keyBoardZ, 0x999999, 'metal', false, 7); // Brushed metal
+
+        // Row 2 (middle row) - 3 decorative keys + CENTER CARD KEY
+        createKeyHook(-0.6, -0.1);
+        createDetailedKey(keyBoardX - 0.6, keyBoardY - 0.1, keyBoardZ, 0xaaaaaa, 'metal', false, -4);
+
+        createKeyHook(-0.2, -0.1);
+        createDetailedKey(keyBoardX - 0.2, keyBoardY - 0.1, keyBoardZ, 0x777777, 'metal', false, 6);
+
+        // ✨ INTERACTIVE CARD KEY (CENTER)
+        createKeyHook(0.2, -0.1);
+        const interactiveKeyCard = createDetailedKey(keyBoardX + 0.2, keyBoardY - 0.1, keyBoardZ, 0xd4af37, 'card', true, 0); // ONLY INTERACTIVE
+
+        createKeyHook(0.6, -0.1);
+        createDetailedKey(keyBoardX + 0.6, keyBoardY - 0.1, keyBoardZ, 0x666666, 'metal', false, -5);
 
         // ============================================================
         // PLAYER CONTROLS
@@ -697,13 +891,13 @@
             if (e.key.toLowerCase() === 'e' && gameState.interactableObject) {
                 const obj = gameState.interactableObject;
 
-                if (obj.userData.type === 'keyCard' && !gameState.hasCard) {
+                if (obj.userData.type === 'keyCard' && obj.userData.interactive && !gameState.hasCard) {
                     // Pick up key card
                     gameState.hasCard = true;
                     gameState.inventory.push('keyCard');
                     obj.visible = false;
                     updateInventoryUI();
-                    console.log('Picked up key card!');
+                    console.log('Picked up realistic 3D key card!');
 
                 } else if (obj.userData.type === 'cardReader' && gameState.hasCard && !gameState.doorUnlocked) {
                     // Unlock door
