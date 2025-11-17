@@ -80,13 +80,17 @@ const ui = {
 // ========== TEXTURE LOADING ==========
 const textureLoader = new THREE.TextureLoader();
 
-function loadTexture(url, fallbackColor = 0xcccccc) {
+function loadTexture(url, options = {}) {
     const texture = textureLoader.load(
         url,
         // onLoad
         (tex) => {
-            tex.wrapS = THREE.RepeatWrapping;
-            tex.wrapT = THREE.RepeatWrapping;
+            tex.wrapS = options.wrapS || THREE.RepeatWrapping;
+            tex.wrapT = options.wrapT || THREE.RepeatWrapping;
+            tex.encoding = THREE.sRGBEncoding;
+            if (options.repeat) {
+                tex.repeat.set(options.repeat[0], options.repeat[1]);
+            }
         },
         // onProgress
         undefined,
@@ -152,9 +156,8 @@ function buildScene1() {
     directionalLight.shadow.camera.bottom = -30;
     scene.add(directionalLight);
 
-    // Floor
-    const floorTexture = loadTexture(TEXTURES.scene1_floor);
-    floorTexture.repeat.set(2, 2);
+    // Floor with texture
+    const floorTexture = loadTexture(TEXTURES.scene1_floor, { repeat: [2, 2] });
     const floorGeometry = new THREE.PlaneGeometry(40, 40);
     const floorMaterial = new THREE.MeshStandardMaterial({
         map: floorTexture,
@@ -193,8 +196,7 @@ function buildScene1() {
     }
 
     // Walls (yellowish aged with texture)
-    const wallTexture = loadTexture(TEXTURES.scene1_wall);
-    wallTexture.repeat.set(4, 1);
+    const wallTexture = loadTexture(TEXTURES.scene1_wall, { repeat: [4, 1] });
     const wallMaterial = new THREE.MeshStandardMaterial({
         map: wallTexture,
         roughness: 0.8,
@@ -209,8 +211,7 @@ function buildScene1() {
     scene.add(backWall);
 
     // Left wall
-    const leftWallTexture = loadTexture(TEXTURES.scene1_wall);
-    leftWallTexture.repeat.set(4, 1);
+    const leftWallTexture = loadTexture(TEXTURES.scene1_wall, { repeat: [4, 1] });
     const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 40), new THREE.MeshStandardMaterial({
         map: leftWallTexture,
         roughness: 0.8,
@@ -222,8 +223,7 @@ function buildScene1() {
     scene.add(leftWall);
 
     // Right wall
-    const rightWallTexture = loadTexture(TEXTURES.scene1_wall);
-    rightWallTexture.repeat.set(4, 1);
+    const rightWallTexture = loadTexture(TEXTURES.scene1_wall, { repeat: [4, 1] });
     const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 40), new THREE.MeshStandardMaterial({
         map: rightWallTexture,
         roughness: 0.8,
@@ -235,8 +235,7 @@ function buildScene1() {
     scene.add(rightWall);
 
     // Front wall (with door opening)
-    const frontWallLeftTexture = loadTexture(TEXTURES.scene1_wall);
-    frontWallLeftTexture.repeat.set(2, 1);
+    const frontWallLeftTexture = loadTexture(TEXTURES.scene1_wall, { repeat: [2, 1] });
     const frontWallLeft = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 0.5), new THREE.MeshStandardMaterial({
         map: frontWallLeftTexture,
         roughness: 0.8,
@@ -245,8 +244,7 @@ function buildScene1() {
     frontWallLeft.position.set(-13, 4, 20);
     scene.add(frontWallLeft);
 
-    const frontWallRightTexture = loadTexture(TEXTURES.scene1_wall);
-    frontWallRightTexture.repeat.set(2, 1);
+    const frontWallRightTexture = loadTexture(TEXTURES.scene1_wall, { repeat: [2, 1] });
     const frontWallRight = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 0.5), new THREE.MeshStandardMaterial({
         map: frontWallRightTexture,
         roughness: 0.8,
@@ -255,26 +253,28 @@ function buildScene1() {
     frontWallRight.position.set(13, 4, 20);
     scene.add(frontWallRight);
 
-    // Glass/metal door
+    // Glass/metal door with texture
     const doorGroup = new THREE.Group();
     doorGroup.position.set(0, 0, 19.5);
 
     const doorFrame = new THREE.Mesh(
         new THREE.BoxGeometry(6.2, 6.2, 0.3),
-        new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8 })
+        new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2 })
     );
     doorFrame.position.y = 3.1;
     doorGroup.add(doorFrame);
 
-    const doorTexture = loadTexture(TEXTURES.scene1_door);
+    const doorTexture = loadTexture(TEXTURES.scene1_door, { wrapS: THREE.ClampToEdgeWrapping, wrapT: THREE.ClampToEdgeWrapping });
     const doorGlass = new THREE.Mesh(
         new THREE.BoxGeometry(5.8, 5.8, 0.2),
         new THREE.MeshStandardMaterial({
             map: doorTexture,
             transparent: true,
-            opacity: 0.7,
-            metalness: 0.5,
-            roughness: 0.1
+            opacity: 0.9,
+            alphaTest: 0.1,
+            metalness: 0.3,
+            roughness: 0.1,
+            side: THREE.DoubleSide
         })
     );
     doorGlass.position.y = 3.1;
@@ -285,57 +285,66 @@ function buildScene1() {
 
     scene.add(doorGroup);
 
-    // Exit sign above door
+    // Exit sign with texture
+    const exitSignTexture = loadTexture(TEXTURES.scene1_exit, { wrapS: THREE.ClampToEdgeWrapping, wrapT: THREE.ClampToEdgeWrapping });
     const exitSign = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 0.5, 0.2),
+        new THREE.BoxGeometry(2, 0.5, 0.1),
         new THREE.MeshStandardMaterial({
-            color: 0x00ff00,
+            map: exitSignTexture,
             emissive: 0x00ff00,
-            emissiveIntensity: 0.8
+            emissiveIntensity: 0.5,
+            transparent: true
         })
     );
-    exitSign.position.set(0, 6.5, 19);
+    exitSign.position.set(0, 6.5, 19.4);
     scene.add(exitSign);
 
     // Key board on wall next to door
-    const keyBoardTexture = loadTexture(TEXTURES.scene1_keyBoard);
+    const keyBoardTexture = loadTexture(TEXTURES.scene1_keyBoard, { wrapS: THREE.ClampToEdgeWrapping, wrapT: THREE.ClampToEdgeWrapping });
     const keyBoardBase = new THREE.Mesh(
         new THREE.BoxGeometry(1.5, 2, 0.1),
         new THREE.MeshStandardMaterial({
             map: keyBoardTexture,
-            metalness: 0.7
+            metalness: 0.6,
+            roughness: 0.3
         })
     );
     keyBoardBase.position.set(4, 3, 19.3);
     scene.add(keyBoardBase);
 
-    // Decorative keys on board
+    // Decorative keys on board (using textures)
     const keyPositions = [
-        { x: 3.6, y: 3.8 },
-        { x: 4.4, y: 3.8 },
-        { x: 3.6, y: 3.2 },
-        { x: 4.4, y: 3.2 },
+        { x: 3.6, y: 3.8, texture: TEXTURES.scene1_keys1 },
+        { x: 4.4, y: 3.8, texture: TEXTURES.scene1_keys2 },
+        { x: 3.6, y: 3.2, texture: TEXTURES.scene1_keys1 },
+        { x: 4.4, y: 3.2, texture: TEXTURES.scene1_keys2 },
     ];
 
     keyPositions.forEach((pos, i) => {
+        const keyTexture = loadTexture(pos.texture, { wrapS: THREE.ClampToEdgeWrapping, wrapT: THREE.ClampToEdgeWrapping });
         const keyMesh = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.05, 0.3),
-            new THREE.MeshStandardMaterial({ color: i % 2 === 0 ? 0xffcc00 : 0xcccccc })
+            new THREE.BoxGeometry(0.15, 0.2, 0.02),
+            new THREE.MeshStandardMaterial({
+                map: keyTexture,
+                metalness: 0.8,
+                roughness: 0.2
+            })
         );
-        keyMesh.rotation.z = Math.PI / 2;
         keyMesh.position.set(pos.x, pos.y, 19.4);
         scene.add(keyMesh);
     });
 
-    // Access card (pickable)
+    // Access card (pickable) with texture
     if (!gameState.hasCardKey) {
-        const cardTexture = loadTexture(TEXTURES.scene1_card);
+        const cardTexture = loadTexture(TEXTURES.scene1_card, { wrapS: THREE.ClampToEdgeWrapping, wrapT: THREE.ClampToEdgeWrapping });
         const cardMesh = new THREE.Mesh(
             new THREE.BoxGeometry(0.3, 0.5, 0.02),
             new THREE.MeshStandardMaterial({
                 map: cardTexture,
-                emissive: 0x0066ff,
-                emissiveIntensity: 0.3
+                emissive: 0x1144ff,
+                emissiveIntensity: 0.2,
+                metalness: 0.1,
+                roughness: 0.7
             })
         );
         cardMesh.position.set(4, 2.5, 19.4);
@@ -367,6 +376,48 @@ function buildScene1() {
     cardReader.userData = { type: 'cardReader', id: 'reader1', indicatorLight };
     interactiveObjects.push(cardReader);
 
+    // Red alarm lights (flashing)
+    const alarmPositions = [
+        { x: -15, y: 7, z: -15 },
+        { x: 15, y: 7, z: -15 },
+        { x: -15, y: 7, z: 15 },
+        { x: 15, y: 7, z: 15 },
+    ];
+
+    alarmPositions.forEach((pos, i) => {
+        // Alarm light housing
+        const alarmHousing = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.2, 0.25, 0.15, 16),
+            new THREE.MeshStandardMaterial({
+                color: 0x220000,
+                metalness: 0.8,
+                roughness: 0.2
+            })
+        );
+        alarmHousing.position.set(pos.x, pos.y, pos.z);
+        scene.add(alarmHousing);
+
+        // Red light
+        const alarmLight = new THREE.Mesh(
+            new THREE.CircleGeometry(0.18, 16),
+            new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                emissive: 0xff0000,
+                emissiveIntensity: 1
+            })
+        );
+        alarmLight.position.set(pos.x, pos.y - 0.08, pos.z);
+        alarmLight.rotation.x = -Math.PI / 2;
+        alarmLight.userData = { type: 'alarm', offset: i * 0.5 };
+        scene.add(alarmLight);
+
+        // Point light for glow
+        const redPointLight = new THREE.PointLight(0xff0000, 1, 5);
+        redPointLight.position.set(pos.x, pos.y - 0.1, pos.z);
+        redPointLight.userData = { type: 'alarmGlow', offset: i * 0.5 };
+        scene.add(redPointLight);
+    });
+
     // Position camera
     camera.position.set(0, 1.6, 8);
     yaw = 0;
@@ -395,8 +446,7 @@ function buildScene2() {
     scene.add(directionalLight);
 
     // Floor (office carpet)
-    const officeFloorTexture = loadTexture(TEXTURES.scene2_floor);
-    officeFloorTexture.repeat.set(2, 2);
+    const officeFloorTexture = loadTexture(TEXTURES.scene2_floor, { repeat: [2, 2] });
     const floorGeometry = new THREE.PlaneGeometry(40, 40);
     const floorMaterial = new THREE.MeshStandardMaterial({
         map: officeFloorTexture,
@@ -1311,14 +1361,23 @@ function animate() {
     updateMovement();
     checkInteractions();
 
-    // Animate rotating objects
+    // Animate rotating objects and alarm lights
+    const time = Date.now() * 0.001;
     scene.children.forEach(child => {
         if (child.userData && child.userData.rotating) {
             child.rotation.y += 0.02;
         }
         if (child.userData && child.userData.type === 'droplet') {
-            const time = Date.now() * 0.001;
             child.position.y = child.userData.startY + Math.sin(time * 2 + child.userData.offset) * 0.3;
+        }
+        // Flashing alarm lights
+        if (child.userData && child.userData.type === 'alarm') {
+            const intensity = Math.abs(Math.sin(time * 2 + child.userData.offset));
+            child.material.emissiveIntensity = intensity;
+        }
+        if (child.userData && child.userData.type === 'alarmGlow') {
+            const intensity = Math.abs(Math.sin(time * 2 + child.userData.offset));
+            child.intensity = intensity * 2;
         }
     });
 
