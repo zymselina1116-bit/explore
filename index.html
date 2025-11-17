@@ -743,15 +743,6 @@
                 interactive: isInteractive
             };
 
-            if (isInteractive) {
-                gameState.interactableObject = keyGroup;
-                room1Group.traverse((obj) => {
-                    if (obj.userData.interactive) {
-                        // Already tracked
-                    }
-                });
-            }
-
             room1Group.add(keyGroup);
             return keyGroup;
         }
