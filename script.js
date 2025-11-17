@@ -217,87 +217,245 @@ function setupScene1() {
     readerLight.userData = { isReaderLight: true };
     scene.add(readerLight);
 
-    // Key Board (mounted on back wall, right side of door)
-    const keyBoard = new THREE.Mesh(
-        new THREE.BoxGeometry(1.8, 2, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x3a3a3a, metalness: 0.5, roughness: 0.6 })
+    // ========== REALISTIC KEY BOARD SYSTEM ==========
+    // Key Board (realistic metal panel with frame)
+    const keyBoardGroup = new THREE.Group();
+    keyBoardGroup.position.set(3.2, 2.5, -9.3);
+
+    // Main board backing (dark brushed metal)
+    const boardBacking = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 1.5, 0.08),
+        new THREE.MeshStandardMaterial({
+            color: 0x2a2a2a,
+            metalness: 0.8,
+            roughness: 0.4
+        })
     );
-    keyBoard.position.set(3.2, 2.5, -9.3);
-    scene.add(keyBoard);
+    keyBoardGroup.add(boardBacking);
 
-    // Keys on board - ONLY the card key is interactive
-    // Row 1 (top) - decorative traditional keys
-    createKey(2.6, 3.2, -9.2, 0xcccccc, 'vintage1', false);
-    createKey(3.0, 3.2, -9.2, 0x888888, 'vintage2', false);
-    createKey(3.4, 3.2, -9.2, 0xaa8866, 'vintage3', false);
-    createKey(3.8, 3.2, -9.2, 0x999999, 'vintage4', false);
+    // Board frame (slightly lighter metal)
+    const frameThickness = 0.05;
+    const frameMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3a3a3a,
+        metalness: 0.7,
+        roughness: 0.3
+    });
 
-    // Row 2 - more decorative keys
-    createKey(2.6, 2.7, -9.2, 0xaaaaaa, 'ordinary1', false);
-    createKey(3.0, 2.7, -9.2, 0x777777, 'ordinary2', false);
-    createKey(3.4, 2.7, -9.2, 0xbbbbbb, 'ordinary3', false);
-    createKey(3.8, 2.7, -9.2, 0x666666, 'ordinary4', false);
+    // Top frame
+    const topFrame = new THREE.Mesh(
+        new THREE.BoxGeometry(1.9, frameThickness, 0.1),
+        frameMaterial
+    );
+    topFrame.position.y = 0.75 + frameThickness / 2;
+    keyBoardGroup.add(topFrame);
 
-    // Row 3 - THE INTERACTIVE CARD KEY (center) + decorative keys
-    createKey(2.6, 2.2, -9.2, 0x999999, 'ordinary5', false);
-    createKey(3.2, 2.2, -9.2, 0xffaa00, 'card', true); // ← ONLY INTERACTIVE KEY
-    createKey(3.8, 2.2, -9.2, 0x888888, 'ordinary6', false);
+    // Bottom frame
+    const bottomFrame = new THREE.Mesh(
+        new THREE.BoxGeometry(1.9, frameThickness, 0.1),
+        frameMaterial
+    );
+    bottomFrame.position.y = -0.75 - frameThickness / 2;
+    keyBoardGroup.add(bottomFrame);
 
-    // Row 4 (bottom) - decorative keys
-    createKey(2.6, 1.7, -9.2, 0xaaaaaa, 'ordinary7', false);
-    createKey(3.0, 1.7, -9.2, 0x999999, 'ordinary8', false);
-    createKey(3.4, 1.7, -9.2, 0x777777, 'ordinary9', false);
-    createKey(3.8, 1.7, -9.2, 0xbbbbbb, 'ordinary10', false);
+    // Left frame
+    const leftFrame = new THREE.Mesh(
+        new THREE.BoxGeometry(frameThickness, 1.5, 0.1),
+        frameMaterial
+    );
+    leftFrame.position.x = -0.9 - frameThickness / 2;
+    keyBoardGroup.add(leftFrame);
+
+    // Right frame
+    const rightFrame = new THREE.Mesh(
+        new THREE.BoxGeometry(frameThickness, 1.5, 0.1),
+        frameMaterial
+    );
+    rightFrame.position.x = 0.9 + frameThickness / 2;
+    keyBoardGroup.add(rightFrame);
+
+    scene.add(keyBoardGroup);
+
+    // ========== KEY HOOKS ==========
+    function createKeyHook(x, y) {
+        const hookGroup = new THREE.Group();
+
+        // Hook backing plate
+        const hookPlate = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.04, 0.04, 0.02, 16),
+            new THREE.MeshStandardMaterial({
+                color: 0x444444,
+                metalness: 0.9,
+                roughness: 0.2
+            })
+        );
+        hookPlate.rotation.x = Math.PI / 2;
+        hookGroup.add(hookPlate);
+
+        // Hook itself (small curved piece)
+        const hookCurve = new THREE.Mesh(
+            new THREE.TorusGeometry(0.025, 0.008, 8, 16, Math.PI),
+            new THREE.MeshStandardMaterial({
+                color: 0x555555,
+                metalness: 0.9,
+                roughness: 0.2
+            })
+        );
+        hookCurve.rotation.x = Math.PI / 2;
+        hookCurve.position.z = 0.02;
+        hookGroup.add(hookCurve);
+
+        hookGroup.position.set(x, y, 0.05);
+        keyBoardGroup.add(hookGroup);
+    }
+
+    // ========== DECORATIVE METAL KEYS (8 total, 2 rows) ==========
+    // Row 1 (top row) - 4 decorative keys
+    createKeyHook(-0.6, 0.4);
+    createDetailedKey(3.2 - 0.6, 2.5 + 0.4, -9.15, 0xcccccc, 'metal', false, 0); // Silver
+
+    createKeyHook(-0.2, 0.4);
+    createDetailedKey(3.2 - 0.2, 2.5 + 0.4, -9.15, 0x888888, 'metal', false, 5); // Dark steel
+
+    createKeyHook(0.2, 0.4);
+    createDetailedKey(3.2 + 0.2, 2.5 + 0.4, -9.15, 0xaa8866, 'metal', false, -3); // Brass
+
+    createKeyHook(0.6, 0.4);
+    createDetailedKey(3.2 + 0.6, 2.5 + 0.4, -9.15, 0x999999, 'metal', false, 7); // Brushed metal
+
+    // Row 2 (middle row) - 4 decorative keys + CENTER CARD KEY
+    createKeyHook(-0.6, -0.1);
+    createDetailedKey(3.2 - 0.6, 2.5 - 0.1, -9.15, 0xaaaaaa, 'metal', false, -4);
+
+    createKeyHook(-0.2, -0.1);
+    createDetailedKey(3.2 - 0.2, 2.5 - 0.1, -9.15, 0x777777, 'metal', false, 6);
+
+    // ✨ INTERACTIVE CARD KEY (CENTER)
+    createKeyHook(0.2, -0.1);
+    createDetailedKey(3.2 + 0.2, 2.5 - 0.1, -9.15, 0xd4af37, 'card', true, 0); // ONLY INTERACTIVE
+
+    createKeyHook(0.6, -0.1);
+    createDetailedKey(3.2 + 0.6, 2.5 - 0.1, -9.15, 0x666666, 'metal', false, -5);
 
     camera.position.set(0, 1.6, 5);
     cameraRotation = { yaw: 0, pitch: 0 };
 }
 
-function createKey(x, y, z, color, keyType, isInteractive) {
-    let keyMesh;
+// ========== DETAILED 3D KEY CREATION FUNCTION ==========
+function createDetailedKey(x, y, z, color, keyType, isInteractive, rotationAngle) {
+    const keyGroup = new THREE.Group();
 
     if (keyType === 'card') {
-        keyMesh = new THREE.Mesh(
-            new THREE.BoxGeometry(0.3, 0.15, 0.05),
+        // ========== REALISTIC 3D CARD KEY (Beveled edges) ==========
+        // Main card body
+        const cardBody = new THREE.Mesh(
+            new THREE.BoxGeometry(0.25, 0.16, 0.04),
             new THREE.MeshStandardMaterial({
                 color: color,
-                metalness: 0.3,
-                emissive: isInteractive ? color : 0x000000,
-                emissiveIntensity: isInteractive ? 0.3 : 0
+                metalness: 0.4,
+                roughness: 0.3,
+                emissive: isInteractive ? 0xd4af37 : 0x000000,
+                emissiveIntensity: isInteractive ? 0.12 : 0
             })
         );
+        keyGroup.add(cardBody);
+
+        // Beveled edges (small border trim)
+        const bevelMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8b7355,
+            metalness: 0.6,
+            roughness: 0.2
+        });
+
+        // Top bevel
+        const topBevel = new THREE.Mesh(
+            new THREE.BoxGeometry(0.26, 0.01, 0.045),
+            bevelMaterial
+        );
+        topBevel.position.y = 0.085;
+        keyGroup.add(topBevel);
+
+        // Bottom bevel
+        const bottomBevel = new THREE.Mesh(
+            new THREE.BoxGeometry(0.26, 0.01, 0.045),
+            bevelMaterial
+        );
+        bottomBevel.position.y = -0.085;
+        keyGroup.add(bottomBevel);
+
+        // Subtle glow indicator for interactive card
+        if (isInteractive) {
+            const glowLight = new THREE.PointLight(0xd4af37, 0.3, 0.5);
+            glowLight.position.set(0, 0, 0.05);
+            keyGroup.add(glowLight);
+        }
+
     } else {
-        // Traditional key shape
-        const keyGroup = new THREE.Group();
+        // ========== REALISTIC METAL KEY (Traditional style) ==========
+        const keyMaterial = new THREE.MeshStandardMaterial({
+            color: color,
+            metalness: 0.85,
+            roughness: 0.25
+        });
+
+        // Key head (circular bow)
         const keyHead = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.08, 0.08, 0.02, 16),
-            new THREE.MeshStandardMaterial({ color: color, metalness: 0.7 })
+            new THREE.TorusGeometry(0.06, 0.015, 12, 24),
+            keyMaterial
         );
         keyHead.rotation.x = Math.PI / 2;
         keyGroup.add(keyHead);
 
+        // Key shaft (blade)
         const keyShaft = new THREE.Mesh(
-            new THREE.BoxGeometry(0.02, 0.2, 0.02),
-            new THREE.MeshStandardMaterial({ color: color, metalness: 0.7 })
+            new THREE.BoxGeometry(0.012, 0.22, 0.025),
+            keyMaterial
         );
-        keyShaft.position.y = -0.1;
+        keyShaft.position.y = -0.14;
         keyGroup.add(keyShaft);
 
-        keyMesh = keyGroup;
+        // Key teeth (small notches)
+        const tooth1 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.012, 0.02, 0.01),
+            keyMaterial
+        );
+        tooth1.position.set(0, -0.18, 0.015);
+        keyGroup.add(tooth1);
+
+        const tooth2 = new THREE.Mesh(
+            new THREE.BoxGeometry(0.012, 0.015, 0.01),
+            keyMaterial
+        );
+        tooth2.position.set(0, -0.22, 0.015);
+        keyGroup.add(tooth2);
+
+        // Key tip
+        const keyTip = new THREE.Mesh(
+            new THREE.ConeGeometry(0.015, 0.03, 8),
+            keyMaterial
+        );
+        keyTip.position.y = -0.265;
+        keyTip.rotation.x = Math.PI;
+        keyGroup.add(keyTip);
     }
 
-    keyMesh.position.set(x, y, z);
-    keyMesh.userData = {
+    // Apply natural hanging rotation
+    keyGroup.rotation.z = (rotationAngle || 0) * (Math.PI / 180);
+
+    // Position the key
+    keyGroup.position.set(x, y, z);
+
+    // Set user data for interaction
+    keyGroup.userData = {
         type: 'key',
         keyType: keyType,
         isInteractive: isInteractive
     };
 
     if (isInteractive) {
-        interactiveObjects.push(keyMesh);
+        interactiveObjects.push(keyGroup);
     }
 
-    scene.add(keyMesh);
+    scene.add(keyGroup);
 }
 
 // ===== SCENE 2: OFFICE FLOOR =====
