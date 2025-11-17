@@ -27,6 +27,19 @@ const ITEMS = {
     artifact_3: { icon: '🦴', name: 'Artifact Bone 3', type: 'artifact' },
 };
 
+// ========== TEXTURE URLS ==========
+const TEXTURES = {
+    scene1_floor: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/41db52c3b4a967c77989cde41f51bbd8ea60b10d/Screenshot%202025-11-16%20at%2011.32.02.png',
+    scene1_wall: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/1d3a162a583640f4cc4887a90ac3b21df84f9f75/Screenshot%202025-11-16%20at%2011.33.37.png',
+    scene1_door: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/d1f948a98383aa407fedbcc7bba124ba6bf5cc37/Screenshot%202025-11-16%20at%2011.37.24.png',
+    scene1_exit: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/6c609a9c86e17d96e216752c622768e152a4016f/Screenshot%202025-11-16%20at%2011.38.38.png',
+    scene1_keyBoard: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/f8c5cf58ca6dffd8f43eaa849055ce498c501483/Screenshot%202025-11-16%20at%2012.43.29.png',
+    scene1_keys1: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/9fc50bdbe91cff0ef23ab1138a30ba9e99cf2c0b/Screenshot%202025-11-16%20at%2012.44.25.png',
+    scene1_keys2: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/7a9781ddb37d5877917511935de0f9d9cceac3f2/Screenshot%202025-11-16%20at%2012.45.54.png',
+    scene1_card: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/f69447a77e66b14fc7f96d9c62291e4e1621e173/Screenshot%202025-11-16%20at%2012.47.51.png',
+    scene2_floor: 'https://raw.githubusercontent.com/zymselina1116-bit/explore/bf02def17b7a6a47a1d6230743ec79c70424dc5c/Screenshot%202025-11-16%20at%2011.41.56.png',
+};
+
 // ========== GLOBALS ==========
 let scene, camera, renderer;
 let interactiveObjects = [];
@@ -63,6 +76,27 @@ const ui = {
     endingScreen: document.getElementById('ending-screen'),
     playAgain: document.getElementById('play-again'),
 };
+
+// ========== TEXTURE LOADING ==========
+const textureLoader = new THREE.TextureLoader();
+
+function loadTexture(url, fallbackColor = 0xcccccc) {
+    const texture = textureLoader.load(
+        url,
+        // onLoad
+        (tex) => {
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+        },
+        // onProgress
+        undefined,
+        // onError
+        (err) => {
+            console.warn(`Failed to load texture: ${url}`, err);
+        }
+    );
+    return texture;
+}
 
 // ========== INITIALIZATION ==========
 function init() {
@@ -119,9 +153,11 @@ function buildScene1() {
     scene.add(directionalLight);
 
     // Floor
+    const floorTexture = loadTexture(TEXTURES.scene1_floor);
+    floorTexture.repeat.set(2, 2);
     const floorGeometry = new THREE.PlaneGeometry(40, 40);
     const floorMaterial = new THREE.MeshStandardMaterial({
-        color: 0x5a5a5a,
+        map: floorTexture,
         roughness: 0.9,
         metalness: 0.1
     });
@@ -156,9 +192,11 @@ function buildScene1() {
         }
     }
 
-    // Walls (yellowish aged)
+    // Walls (yellowish aged with texture)
+    const wallTexture = loadTexture(TEXTURES.scene1_wall);
+    wallTexture.repeat.set(4, 1);
     const wallMaterial = new THREE.MeshStandardMaterial({
-        color: 0xc9b896,
+        map: wallTexture,
         roughness: 0.8,
         metalness: 0.1
     });
@@ -171,25 +209,49 @@ function buildScene1() {
     scene.add(backWall);
 
     // Left wall
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 40), wallMaterial);
+    const leftWallTexture = loadTexture(TEXTURES.scene1_wall);
+    leftWallTexture.repeat.set(4, 1);
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 40), new THREE.MeshStandardMaterial({
+        map: leftWallTexture,
+        roughness: 0.8,
+        metalness: 0.1
+    }));
     leftWall.position.set(-20, 4, 0);
     leftWall.castShadow = true;
     leftWall.receiveShadow = true;
     scene.add(leftWall);
 
     // Right wall
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 40), wallMaterial);
+    const rightWallTexture = loadTexture(TEXTURES.scene1_wall);
+    rightWallTexture.repeat.set(4, 1);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 40), new THREE.MeshStandardMaterial({
+        map: rightWallTexture,
+        roughness: 0.8,
+        metalness: 0.1
+    }));
     rightWall.position.set(20, 4, 0);
     rightWall.castShadow = true;
     rightWall.receiveShadow = true;
     scene.add(rightWall);
 
     // Front wall (with door opening)
-    const frontWallLeft = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 0.5), wallMaterial);
+    const frontWallLeftTexture = loadTexture(TEXTURES.scene1_wall);
+    frontWallLeftTexture.repeat.set(2, 1);
+    const frontWallLeft = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 0.5), new THREE.MeshStandardMaterial({
+        map: frontWallLeftTexture,
+        roughness: 0.8,
+        metalness: 0.1
+    }));
     frontWallLeft.position.set(-13, 4, 20);
     scene.add(frontWallLeft);
 
-    const frontWallRight = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 0.5), wallMaterial);
+    const frontWallRightTexture = loadTexture(TEXTURES.scene1_wall);
+    frontWallRightTexture.repeat.set(2, 1);
+    const frontWallRight = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 0.5), new THREE.MeshStandardMaterial({
+        map: frontWallRightTexture,
+        roughness: 0.8,
+        metalness: 0.1
+    }));
     frontWallRight.position.set(13, 4, 20);
     scene.add(frontWallRight);
 
@@ -204,12 +266,13 @@ function buildScene1() {
     doorFrame.position.y = 3.1;
     doorGroup.add(doorFrame);
 
+    const doorTexture = loadTexture(TEXTURES.scene1_door);
     const doorGlass = new THREE.Mesh(
         new THREE.BoxGeometry(5.8, 5.8, 0.2),
         new THREE.MeshStandardMaterial({
-            color: 0x88ccff,
+            map: doorTexture,
             transparent: true,
-            opacity: 0.3,
+            opacity: 0.7,
             metalness: 0.5,
             roughness: 0.1
         })
@@ -235,9 +298,13 @@ function buildScene1() {
     scene.add(exitSign);
 
     // Key board on wall next to door
+    const keyBoardTexture = loadTexture(TEXTURES.scene1_keyBoard);
     const keyBoardBase = new THREE.Mesh(
         new THREE.BoxGeometry(1.5, 2, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.7 })
+        new THREE.MeshStandardMaterial({
+            map: keyBoardTexture,
+            metalness: 0.7
+        })
     );
     keyBoardBase.position.set(4, 3, 19.3);
     scene.add(keyBoardBase);
@@ -262,12 +329,13 @@ function buildScene1() {
 
     // Access card (pickable)
     if (!gameState.hasCardKey) {
+        const cardTexture = loadTexture(TEXTURES.scene1_card);
         const cardMesh = new THREE.Mesh(
             new THREE.BoxGeometry(0.3, 0.5, 0.02),
             new THREE.MeshStandardMaterial({
-                color: 0x3399ff,
+                map: cardTexture,
                 emissive: 0x0066ff,
-                emissiveIntensity: 0.5
+                emissiveIntensity: 0.3
             })
         );
         cardMesh.position.set(4, 2.5, 19.4);
@@ -327,9 +395,11 @@ function buildScene2() {
     scene.add(directionalLight);
 
     // Floor (office carpet)
+    const officeFloorTexture = loadTexture(TEXTURES.scene2_floor);
+    officeFloorTexture.repeat.set(2, 2);
     const floorGeometry = new THREE.PlaneGeometry(40, 40);
     const floorMaterial = new THREE.MeshStandardMaterial({
-        color: 0x4a4a5a,
+        map: officeFloorTexture,
         roughness: 0.95
     });
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
